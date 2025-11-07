@@ -4,7 +4,7 @@
  */
 
 define('CYBERWEB_APP', true);
-require_once '../config.php';
+require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/security.php';
 require_once '../includes/functions.php';

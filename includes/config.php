@@ -25,8 +25,8 @@ define('OTP_EXPIRY', 300); //5 minutes for 2FA tokens
 //file upload settings
 define('MAX_FILE_SIZE', 5242880); // 5MB
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
-define('UPLOAD_PATH_PROFILES', __DIR__ . '/uploads/profiles/');
-define('UPLOAD_PATH_POSTS', __DIR__ . '/uploads/posts/');
+define('UPLOAD_PATH_PROFILES', dirname(__DIR__) . '/uploads/profiles/');
+define('UPLOAD_PATH_POSTS', dirname(__DIR__) . '/uploads/posts/');
 
 //email config (for 2FA and notifications)
 define('USE_SMTP', true); //set to true to use SMTP, false to use mail()
