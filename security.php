@@ -162,6 +162,87 @@ function checkRateLimit($identifier, $action, $maxAttempts, $windowMinutes = 60)
 }
 
 /**
+ * Check authentication rate limits
+ * Returns ['allowed' => bool, 'reason' => string]
+ */
+function checkAuthRateLimit($username, $ipAddress) {
+    $db = getDB();
+
+    // Check IP-based rate limit (10 attempts -> 1 hour timeout)
+    $stmt = $db->prepare("SELECT attempts, window_start
+                          FROM rate_limits
+                          WHERE identifier = ? AND action = 'login_ip'
+                          AND window_start > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+    $stmt->execute([$ipAddress, LOGIN_LOCKOUT_IP]);
+    $ipLimit = $stmt->fetch();
+
+    if ($ipLimit && $ipLimit['attempts'] >= MAX_LOGIN_ATTEMPTS_IP) {
+        return ['allowed' => false, 'reason' => 'Too many login attempts from your IP address. Please try again in 1 hour.'];
+    }
+
+    // Check username-based rate limit (4 attempts within 5 minutes -> 10 minute timeout)
+    $stmt = $db->prepare("SELECT attempts, window_start
+                          FROM rate_limits
+                          WHERE identifier = ? AND action = 'login_username'
+                          AND window_start > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+    $stmt->execute([$username, LOGIN_LOCKOUT_USERNAME]);
+    $usernameLimit = $stmt->fetch();
+
+    if ($usernameLimit && $usernameLimit['attempts'] >= MAX_LOGIN_ATTEMPTS_USERNAME) {
+        return ['allowed' => false, 'reason' => 'Too many failed login attempts for this username. Please try again in 10 minutes.'];
+    }
+
+    return ['allowed' => true, 'reason' => ''];
+}
+
+/**
+ * Record failed login attempt
+ */
+function recordFailedLogin($username, $ipAddress) {
+    $db = getDB();
+
+    // Record IP-based attempt
+    $stmt = $db->prepare("INSERT INTO rate_limits (identifier, action, attempts, window_start)
+                          VALUES (?, 'login_ip', 1, NOW())
+                          ON DUPLICATE KEY UPDATE attempts = attempts + 1");
+    $stmt->execute([$ipAddress]);
+
+    // Record username-based attempt (only if within the 5-minute window)
+    $stmt = $db->prepare("SELECT attempts FROM rate_limits
+                          WHERE identifier = ? AND action = 'login_username'
+                          AND window_start > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+    $stmt->execute([$username, LOGIN_WINDOW_USERNAME]);
+    $existing = $stmt->fetch();
+
+    if ($existing) {
+        // Within window, increment
+        $stmt = $db->prepare("UPDATE rate_limits
+                             SET attempts = attempts + 1
+                             WHERE identifier = ? AND action = 'login_username'");
+        $stmt->execute([$username]);
+    } else {
+        // Outside window or new, reset with new window
+        $stmt = $db->prepare("INSERT INTO rate_limits (identifier, action, attempts, window_start)
+                              VALUES (?, 'login_username', 1, NOW())
+                              ON DUPLICATE KEY UPDATE attempts = 1, window_start = NOW()");
+        $stmt->execute([$username]);
+    }
+}
+
+/**
+ * Clear authentication rate limits after successful login
+ */
+function clearAuthRateLimit($username, $ipAddress) {
+    $db = getDB();
+
+    // Clear username-based limit
+    $stmt = $db->prepare("DELETE FROM rate_limits WHERE identifier = ? AND action = 'login_username'");
+    $stmt->execute([$username]);
+
+    // Note: We don't clear IP-based limits to prevent distributed attacks
+}
+
+/**
  * Validate file upload
  */
 function validateImageUpload($file) {

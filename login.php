@@ -22,24 +22,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         $errors[] = "Invalid request. Please try again.";
     } else {
-        // Check rate limiting
-        $ipAddress = $_SERVER['REMOTE_ADDR'];
-        if (!checkRateLimit($ipAddress, 'login', MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_TIME / 60)) {
-            $errors[] = "Too many login attempts. Please try again later.";
-        } else {
-            // Verify credentials
-            if (isset($_POST['username']) && isset($_POST['password'])) {
-                $username = sanitizeInput($_POST['username']);
-                $password = $_POST['password'];
+        // Verify credentials
+        if (isset($_POST['username']) && isset($_POST['password'])) {
+            $username = sanitizeInput($_POST['username']);
+            $password = $_POST['password'];
+            $ipAddress = $_SERVER['REMOTE_ADDR'];
 
+            // Check authentication rate limits (username and IP-based)
+            $rateLimitCheck = checkAuthRateLimit($username, $ipAddress);
+            if (!$rateLimitCheck['allowed']) {
+                $errors[] = $rateLimitCheck['reason'];
+            } else {
                 $user = getUserByUsername($username);
 
                 if (!$user || !verifyPassword($password, $user['password_hash'])) {
+                    // Record failed login attempt
+                    recordFailedLogin($username, $ipAddress);
                     $errors[] = "Invalid username or password";
                 } elseif (isUserBlocked($user['user_id'])) {
                     $errors[] = "Your account has been blocked. Please contact support.";
                 } else {
-                    // Login successful - create session directly
+                    // Login successful - clear rate limits and create session
+                    clearAuthRateLimit($username, $ipAddress);
+
                     regenerateSession();
                     $_SESSION['user_id'] = $user['user_id'];
                     $_SESSION['username'] = $user['username'];
@@ -73,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         redirect('index.php');
                     }
                 }
-            } else {
-                $errors[] = "Invalid request";
             }
+        } else {
+            $errors[] = "Invalid request";
         }
     }
 }
