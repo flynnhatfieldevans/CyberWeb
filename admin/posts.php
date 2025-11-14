@@ -435,10 +435,6 @@ $csrfToken = generateCSRFToken();
                             </div>
 
                             <div class="post-actions">
-                                <a href="../index.php#post-<?php echo $post['post_id']; ?>"
-                                   class="btn btn-sm btn-secondary" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> View
-                                </a>
                                 <button class="btn btn-sm btn-danger"
                                         onclick="confirmDeletePost(<?php echo $post['post_id']; ?>, '<?php echo htmlspecialchars($post['username']); ?>')">
                                     <i class="fas fa-trash"></i> Delete
