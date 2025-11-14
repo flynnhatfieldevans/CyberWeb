@@ -1,0 +1,12 @@
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="300" fill="#1a1a1a"/>
+
+  <!-- User icon -->
+  <circle cx="150" cy="110" r="50" fill="#0066ff" opacity="0.3"/>
+  <circle cx="150" cy="110" r="35" fill="#0066ff"/>
+
+  <!-- Body -->
+  <ellipse cx="150" cy="260" rx="85" ry="75" fill="#0066ff" opacity="0.3"/>
+  <path d="M 65 220 Q 150 200 235 220 L 235 300 L 65 300 Z" fill="#0066ff"/>
+</svg>
