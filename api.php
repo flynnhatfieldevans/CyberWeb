@@ -231,7 +231,7 @@ try {
             
             // Insert report for post
             $stmt = $db->prepare("
-                INSERT INTO reports (reporter_id, reported_user_id, post_id, reason, created_at)
+                INSERT INTO reports (reporter_id, reported_user_id, reported_post_id, reason, created_at)
                 VALUES (?, ?, ?, ?, NOW())
             ");
             $stmt->execute([$_SESSION['user_id'], $post['user_id'], $post_id, $reason]);
