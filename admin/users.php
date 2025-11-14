@@ -146,6 +146,7 @@ $csrfToken = generateCSRFToken();
                 <li><a href="index.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="reports.php"><i class="fas fa-flag"></i> Reports</a></li>
                 <li><a href="users.php" class="active"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="posts.php"><i class="fas fa-images"></i> Posts</a></li>
                 <li><a href="audit-log.php"><i class="fas fa-history"></i> Audit Log</a></li>
             </ul>
         </div>
